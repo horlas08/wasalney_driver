@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "259470122485",
+    "project_id": "okay-f7073",
+    "storage_bucket": "okay-f7073.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259470122485:android:1954595c173cf555d694bc",
+        "android_client_info": {
+          "package_name": "com.okay.peyk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_MDJJ_i0qi5ZlldmBiz39Y3eL9j9moKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259470122485:android:f13b6c9cd0dae989d694bc",
+        "android_client_info": {
+          "package_name": "com.test.notification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_MDJJ_i0qi5ZlldmBiz39Y3eL9j9moKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
