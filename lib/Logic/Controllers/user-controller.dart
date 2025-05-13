@@ -1,29 +1,33 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
+
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dio/dio.dart' as dio;
+import 'package:driver/Logic/Controllers/app-controller.dart';
 import 'package:driver/Logic/Controllers/main-controller.dart';
 import 'package:driver/Logic/Controllers/map-controller.dart';
+import 'package:driver/Logic/Helpers/token-methods.dart';
 import 'package:driver/Models/car-detail.dart';
 import 'package:driver/Models/info-bank.dart';
 import 'package:driver/Models/rate.dart';
+import 'package:driver/Models/user.dart';
 import 'package:driver/Models/wallet.dart';
 import 'package:driver/Models/weeklyStatistics.dart';
+import 'package:driver/Public/enums.dart';
+import 'package:driver/View/Components/Popups/snackbar.dart';
 import 'package:driver/View/Pages/Auth/register.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:driver/Logic/Controllers/app-controller.dart';
-import 'package:driver/Logic/Helpers/token-methods.dart';
-import 'package:driver/Models/user.dart';
-import 'package:driver/Public/enums.dart';
-import 'package:driver/View/Components/Popups/snackbar.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:image/image.dart' as IMG;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../../Models/dailyStatistics.dart';
 import '../../Models/documents-detail.dart';
 import '../../Models/message.dart';
@@ -39,7 +43,6 @@ import '../../View/Pages/Auth/information.dart';
 import '../../View/Pages/Main/message-admin.dart';
 import '../../View/Pages/Map/home-map.dart';
 import '../Helpers/api-methods.dart';
-import 'package:image/image.dart' as IMG;
 import 'notification-controller.dart';
 import 'order-controller.dart';
 
@@ -127,15 +130,18 @@ class UserController extends GetxController {
   static FCMTOken() async {
     var messaging = FirebaseMessaging.instance;
     await messaging.requestPermission();
-    final token=await messaging.getToken();
+    final token = await messaging.getToken();
     print("Token>>>:${token}");
-    if(token !=null){
-      var response=await RestApi.post(setTokenUrl,body: {'fcm_token':token});
-      RestApi.responseHandler(response: response,successCallback: () async {
-        user.value.tokenFCM=response!.data['data']['fcm_token'];
-        print("Token>>>:${user.value.tokenFCM}");
-        await Token.setNotifToken(user.value.tokenFCM!);
-      });
+    if (token != null) {
+      var response =
+          await RestApi.post(setTokenUrl, body: {'fcm_token': token});
+      RestApi.responseHandler(
+          response: response,
+          successCallback: () async {
+            user.value.tokenFCM = response!.data['data']['fcm_token'];
+            print("Token>>>:${user.value.tokenFCM}");
+            await Token.setNotifToken(user.value.tokenFCM!);
+          });
     }
   }
 
@@ -317,8 +323,7 @@ class UserController extends GetxController {
             UserController.getMyLocation(
                 controller: MapApiController.mainController);
             OrderController.allOrders();
-          }
-          else{
+          } else {
             MapApiController.removeAllMarker();
           }
         },
@@ -336,14 +341,16 @@ class UserController extends GetxController {
           UserController.user.value = User.fromJson(response.data['data']);
           if (UserController.user.value.statusDriver!.id == 2) {
             Navigator.pushAndRemoveUntil(
-                Get.context!,
-                MaterialPageRoute(builder: (context) => HomeMap()),
-                (route) => false);
+              Get.context!,
+              MaterialPageRoute(builder: (context) => HomeMap()),
+              (route) => false,
+            );
           } else {
             Navigator.pushAndRemoveUntil(
-                Get.context!,
-                MaterialPageRoute(builder: (context) => MessageAdmin()),
-                (route) => false);
+              Get.context!,
+              MaterialPageRoute(builder: (context) => MessageAdmin()),
+              (route) => false,
+            );
           }
         },
         printResponse: true);
@@ -390,8 +397,10 @@ class UserController extends GetxController {
     RestApi.responseHandler(
         response: response,
         successCallback: () {
-          user.value.document.value.onCarCard = response!.data['data']['on_car_card'];
-          print('on card >>${basePathImgMain + UserController.user.value.document.value.onCarCard!}');
+          user.value.document.value.onCarCard =
+              response!.data['data']['on_car_card'];
+          print(
+              'on card >>${basePathImgMain + UserController.user.value.document.value.onCarCard!}');
           // if(user.value.documents.value.length!=0){
           //   user.value.documents.value[0].onCarCard=response!.data['data']['on_car_card'];
           // }
@@ -481,11 +490,10 @@ class UserController extends GetxController {
             user.value = User.fromJson(response.data['data']);
             if (response.data['data']['car_details'].length != 0) {
               print('json222 >>>${response.data['data']['car_details']}');
-                CarDetail carDetail =
-                CarDetail.fromJson(response.data['data']['car_details'][0]);
+              CarDetail carDetail =
+                  CarDetail.fromJson(response.data['data']['car_details'][0]);
 
-                carDetails = carDetail;
-
+              carDetails = carDetail;
             }
             token = await Token.getToken();
             FCMTOken();
@@ -502,10 +510,7 @@ class UserController extends GetxController {
             yesterdayReport = Statistics.fromJson(
                 response.data['data']['yesterday_statistics']);
 
-
             // await MainController.getDocuments();
-
-
           },
           errorCallback: () {
             Navigator.pushAndRemoveUntil(
@@ -704,7 +709,7 @@ class UserController extends GetxController {
   //     }
   // }
 
-  static chooseProfile(ImageSource imageSource,bool camera) async {
+  static chooseProfile(ImageSource imageSource, bool camera) async {
     var accepted = false;
     if (!kIsWeb) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
@@ -786,14 +791,22 @@ class UserController extends GetxController {
 
           AppController.isLoading.value = true;
           AppController.startLoading(['set-profile']);
-          var response = await RestApi.post(avatarUrl,
-              body: {'file': base64.encode(selectedImage)});
-          RestApi.responseHandler(
-              response: response,
-              successCallback: () {
-                user.value.image.value = response!.data['data']['image'];
-              },
-              printResponse: true);
+          final res = await uploadImage(selectedImage);
+          if (res?.statusCode == 200) {
+            print('res>>${res!.data}');
+            user.value.image.value = res!.data['data']['image'];
+            showSnackbar(snackTypes.success, '${res?.data['message'] ?? ''}');
+          } else {
+            showSnackbar(snackTypes.error, '${res?.data['message'] ?? 'erty'}');
+          }
+          // var response = await RestApi.post(avatarUrl,
+          //     body: {'file': base64.encode(selectedImage)});
+          // RestApi.responseHandler(
+          //     response: response,
+          //     successCallback: () {
+          //       user.value.image.value = response!.data['data']['image'];
+          //     },
+          //     printResponse: true);
           AppController.finishLoading(['set-profile']);
           AppController.isLoading.value = false;
         }
@@ -828,6 +841,39 @@ class UserController extends GetxController {
     print("size after: " + size.toString() + " bytes");
 
     return resizedData;
+  }
+
+  static Future<dio.Response?> uploadImage(Uint8List selectedImage) async {
+    final dioC = dio.Dio();
+
+    // Convert Uint8List to MultipartFile
+    final multipartFile = dio.MultipartFile.fromBytes(
+      selectedImage,
+      filename: "upload.jpg", // can be any name
+      contentType: MediaType("image", "jpeg"), // or "png" based on your image
+    );
+
+    // Create FormData
+    final formData = dio.FormData.fromMap({
+      "image": multipartFile,
+    });
+
+    try {
+      final mytoken = await Token.getToken();
+      final response = await dioC.post(
+        avatarUrl, // replace with your API URL
+        data: formData,
+        options: dio.Options(
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Authorization": "Bearer $mytoken", // if you need auth
+          },
+        ),
+      );
+      return response;
+    } catch (e) {
+      print("Error uploading image: $e");
+    }
   }
 
   static Future<bool> getMyLocation({GoogleMapController? controller}) async {
@@ -868,16 +914,14 @@ class UserController extends GetxController {
         // Navigator.pop(Get.context!);
         getPermisionLocation(controller: controller);
       });
-    }
-    else{
+    } else {
       getPermisionLocation(controller: controller);
-
     }
     return true;
   }
 
-  static Future<bool> getPermisionLocation({GoogleMapController? controller}) async {
-
+  static Future<bool> getPermisionLocation(
+      {GoogleMapController? controller}) async {
     print('start determine');
     print('controllerrrrr>>>${controller}');
     bool serviceEnabled;
